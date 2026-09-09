@@ -15,7 +15,7 @@
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../gateway/tsconfig.host.json"
+      "path": "../../core/scope"
     },
     {
       "path": "../../core/session"
@@ -24,31 +24,13 @@
       "path": "../../credentials/credentials"
     },
     {
-      "path": "../../interaction/commands"
-    },
-    {
-      "path": "../../llm/llm"
+      "path": "../../extensions/cordis-host-runner"
     },
     {
       "path": "../../goal/goal"
     },
     {
-      "path": "../../preset/agent-presets"
-    },
-    {
-      "path": "../../extensions/cordis-host-runner"
-    },
-    {
-      "path": "../../settings/settings"
-    },
-    {
-      "path": "../../core/scope"
-    },
-    {
-      "path": "../../util/deque"
-    },
-    {
-      "path": "../../util/values"
+      "path": "../../interaction/commands"
     },
     {
       "path": "../../interaction/user-approval"
@@ -57,16 +39,37 @@
       "path": "../../interaction/user-questions"
     },
     {
-      "path": "../session-controller/tsconfig.host.json"
+      "path": "../../llm/llm"
     },
     {
-      "path": "../workspace-files/tsconfig.host.json"
+      "path": "../../mcp/mcp-manager"
+    },
+    {
+      "path": "../../preset/agent-presets"
+    },
+    {
+      "path": "../../settings/settings"
+    },
+    {
+      "path": "../../typert/protocol"
+    },
+    {
+      "path": "../../util/deque"
+    },
+    {
+      "path": "../../util/values"
+    },
+    {
+      "path": "../gateway/tsconfig.host.json"
+    },
+    {
+      "path": "../session-controller/tsconfig.host.json"
     },
     {
       "path": "../workspace-controller/tsconfig.host.json"
     },
     {
-      "path": "../../typert/protocol"
+      "path": "../workspace-files/tsconfig.host.json"
     }
   ]
 }

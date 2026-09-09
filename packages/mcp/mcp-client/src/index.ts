@@ -19,11 +19,37 @@ import { scopeOf } from '@deepseek-ai/dsh-scope'
 import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
 import { RECONNECT_DEFAULTS, resolveReconnectPolicy, startConnection } from './connection.ts'
 import type { ReconnectConfig } from './connection.ts'
+import { probeMcpServer } from './probe.ts'
 // Side-effect type import: declaration-merges `ctx.tools` onto Context.
 import type {} from '@deepseek-ai/dsh-tools'
 
+export { probeMcpServer }
+export type { McpProbeResult } from './probe.ts'
 export type { McpResult } from './tools.ts'
 export type { ReconnectConfig, ResolvedReconnectPolicy } from './connection.ts'
+
+/** Live connection state emitted by every MCP client instance. */
+export interface McpClientStatus {
+  /** Stable local namespace of the MCP server. */
+  serverName: string
+  /** Current supervisor state. */
+  state: 'connecting' | 'connected' | 'reconnecting' | 'failed' | 'exhausted' | 'stopped'
+  /** Number of tools in the last committed generation. */
+  toolCount: number
+  /** Current outage attempt, when reconnecting. */
+  attempt?: number
+  /** Bounded, non-secret diagnostic summary. */
+  error?: string
+  /** Optional manager-owned identity used to reject late events. */
+  managedEntryId?: string
+}
+
+declare module '@deepseek-ai/cordis' {
+  interface Events {
+    /** Emitted after an MCP connection state or committed tool generation changes. */
+    'mcp-client/status'(status: McpClientStatus): void
+  }
+}
 
 /** Cordis plugin name used by loader diagnostics. */
 export const name = 'mcp-client'
@@ -70,6 +96,8 @@ export interface StdioConfig {
   failOnStartupError: boolean
   /** Automatic reconnect policy after a lost connection; omission uses the defaults. */
   reconnect?: ReconnectConfig
+  /** Optional manager-owned identity used to reject late events. */
+  managedEntryId?: string
 }
 
 /** Config for connecting to an MCP server over Streamable HTTP (SSE). */
@@ -92,6 +120,8 @@ export interface StreamableHttpConfig {
   failOnStartupError: boolean
   /** Automatic reconnect policy after a lost connection; omission uses the defaults. */
   reconnect?: ReconnectConfig
+  /** Optional manager-owned identity used to reject late events. */
+  managedEntryId?: string
 }
 
 /** Configuration for one stdio or Streamable HTTP MCP server. */
@@ -114,6 +144,7 @@ export const Config = z.union([
   z.object({
     transport: z.const('stdio'),
     serverName: z.string().required().pattern(SERVER_NAME_PATTERN),
+    managedEntryId: z.string(),
     command: z.string().required(),
     args: z.array(String).default([]),
     env: z.dict(String).default({}),
@@ -125,6 +156,7 @@ export const Config = z.union([
   z.object({
     transport: z.const('streamable-http'),
     serverName: z.string().required().pattern(SERVER_NAME_PATTERN),
+    managedEntryId: z.string(),
     url: z.string().required(),
     headers: z.dict(String).default({}),
     toolCallTimeoutMs: z.number().default(DEFAULT_TOOL_CALL_TIMEOUT_MS),
@@ -170,7 +202,9 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
   // The supervisor owns the client/transport generations, the reconnect
   // loop, and the live tool registrations; disposal stops reconnection,
   // quiesces in-flight work, and unregisters the current generation.
-  const connection = startConnection(ctx, config, reconnect)
+  const connection = startConnection(ctx, config, reconnect, (status) => {
+    ctx.emit('mcp-client/status', status)
+  })
 
   ctx.effect(() => {
     return () => connection.dispose()

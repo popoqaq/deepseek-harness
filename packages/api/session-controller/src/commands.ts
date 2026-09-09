@@ -32,6 +32,7 @@ import {
   hasApiSessionSubagentOwner,
   inspectApiSession,
 } from './agent.ts'
+import type {} from './image-prompt-admission.ts'
 import type {
   SessionAttachmentRequest,
   SessionAttachmentValue,
@@ -339,6 +340,26 @@ export class SessionCommandController {
           const current = this.agents.selectionFor(agent).current
           const model = await this.ctx.llm.resolveModelInfo(current.provider, current.model)
           if (model.inputModalities !== undefined && !model.inputModalities.includes('image')) {
+            // Generic admission seam (image-prompt-admission.ts): an optional
+            // plugin service may take over the admission of an image prompt
+            // the current model cannot carry — e.g. automatic image analysis
+            // that injects the picture and publishes its transcription as a
+            // notice. An absent service keeps the historical refusal below.
+            const takeover = this.ctx.imagePromptAdmission
+            if (takeover !== undefined) {
+              const decision = await takeover.admit({
+                sessionId: agent.id,
+                agent,
+                mode: request.mode === 'steer' ? 'steer' : 'queue',
+                content: request.content,
+                source,
+                provider: current.provider,
+                model: current.model,
+                modelInfo: model,
+              })
+              if (decision.kind === 'admitted') return { accepted: true }
+              throw new RemoteError('session/attachment-invalid', decision.message, { reason: decision.reason })
+            }
             throw new RemoteError(
               'session/attachment-invalid',
               `Model "${current.model}" does not support image input.`,

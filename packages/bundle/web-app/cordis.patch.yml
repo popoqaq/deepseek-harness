@@ -72,6 +72,9 @@
     - id: ui-open-in-app
       name: '@deepseek-ai/dsh-client-ui-open-in-app'
 
+    - id: ui-watchlist
+      name: '@deepseek-ai/dsh-client-ui-watchlist'
+
     - id: workspace
       name: '@deepseek-ai/dsh-workspace'
 
@@ -101,6 +104,10 @@
     - id: plugin-inventory
       name: '@deepseek-ai/dsh-host-plugin-inventory'
 
+    # Persisted MCP Server control plane; enabled by default but starts no
+    # external process until the user adds and enables a Server in Settings.
+    - id: mcp-manager
+      name: '@deepseek-ai/dsh-mcp-manager'
     # Session commands, cold reads, and live control over Typert Remote.
     - id: session-controller
       name: '@deepseek-ai/dsh-api-session-controller'
@@ -336,6 +343,10 @@
     # cards. A namespace this deployment does not expose renders nothing.
     - id: ui-settings-plugins
       name: '@deepseek-ai/dsh-client-ui-settings-plugins'
+
+    # MCP Server lifecycle and configuration tab under the Plugins settings page.
+    - id: ui-mcp-manager
+      name: '@deepseek-ai/dsh-client-ui-mcp-manager'
 
     # Plan control: the composer plan seat over the plan projection + /plan channel.
     - id: ui-plan

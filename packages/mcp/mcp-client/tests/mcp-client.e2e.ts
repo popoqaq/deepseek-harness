@@ -25,6 +25,7 @@ import ToolRuntime from '@deepseek-ai/dsh-tools'
 import { ToolCallId, LlmAdapter, LlmRuntime } from '@deepseek-ai/dsh-llm'
 import type { GenerateOptions, LlmResolvedModelInfo, StreamChunk } from '@deepseek-ai/dsh-llm'
 import { apply } from '@deepseek-ai/dsh-mcp-client/src/index.ts'
+import { probeMcpServer } from '@deepseek-ai/dsh-mcp-client/src/probe.ts'
 import { publicToolName } from '@deepseek-ai/dsh-mcp-client/src/tools.ts'
 import type { Config } from '@deepseek-ai/dsh-mcp-client'
 
@@ -118,6 +119,13 @@ describe('fixture server — controlled scenarios', () => {
     if (ctx) await ctx.fiber.dispose()
     await sleep(200)
     await rm(home, { recursive: true, force: true })
+  })
+
+  it('probes and discovers tools without registering them', async () => {
+    const result = await probeMcpServer({ ...fixtureConfig, serverName: 'probe' }, 15_000)
+    expect(result.toolCount).toBeGreaterThanOrEqual(6)
+    expect(result.toolNames).toContain('greet')
+    expect(ctx.tools.get('mcp__probe__greet')).toBeUndefined()
   })
 
   it('discovers all fixture tools under the server namespace', () => {
